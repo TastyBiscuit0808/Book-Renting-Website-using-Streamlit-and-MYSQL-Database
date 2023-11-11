@@ -9,6 +9,9 @@ mydb = mysql.connector.connect(
     database="books"
 )
 
+#st.set_page_config(background_color="#00ff00")
+
+
 # In the global scope, initialize the flag using st.session_state
 if 'flag' not in st.session_state:
     st.session_state.flag = 0
@@ -88,45 +91,45 @@ if options == "WishList":
 
     if option == "View":
         st.subheader("Wishlist")
-        user_id = st.text_input("Enter User ID:")
+        user_name = st.text_input("Enter User Name:")
         view = st.button("View Wishlist")
 
         if view:
-            if user_id:
-                mycursor.execute("SELECT bookname FROM wishlist WHERE user_id = %s", (user_id,))
+            if user_name:
+                mycursor.execute("SELECT bookname FROM wishlist WHERE username = %s", (user_name,))
                 wishlist_items = mycursor.fetchall()
 
-                if wishlist_items:
-                    st.write(f"Wishlist items for User ID {user_id}:")
+                if wishlist_items and st.session_state.flag == 1:
+                    st.write(f"Wishlist items for User ID {user_name}:")
                     for item in wishlist_items:
                         st.write(f"- {item[0]}")
                 else:
-                    st.write("No items found for the given User ID.")
+                    if(st.session_state!=1):
+                        st.write("Please Login First!!")
+                    else:
+                        st.write("No items found for the given User ID.")
             else:
                 st.write("Please enter a User ID.")
 
     elif option == "Add":
         st.subheader("Add to Wishlist")
-        u_id = st.text_input("Enter User ID:")
+        u_name = st.text_input("Enter User Name:")
         bn = st.text_input("Enter Book Name:")
         add = st.button("Add to Wishlist")
 
         if add:
-            if u_id and bn:
+            if u_name and bn and st.session_state.flag == 1:
                 try:
-                    query = "INSERT INTO wishlist (user_id, bookname) VALUES (%s, %s)"
-                    mycursor.execute(query, (u_id, bn))
+                    query = "INSERT INTO wishlist (username, bookname) SELECT %s, %s FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM wishlist WHERE bookname = %s)"
+                    mycursor.execute(query, (u_name, bn, bn))
                     mydb.commit()
-                    # if result:
-                    #     st.write(f"Added '{bn}' to the wishlist for User ID {u_id}.")
-                    # else:
-                    #     st.write("Problem Occurred!!")
                 except Exception as e:
                     st.write(f"An error occurred: {e}")
             else:
-                st.write("Please enter User ID and Book Name.")
-
-
+                if(st.session_state!=1):
+                    st.write("Please Login First!!")
+                else:
+                    st.write("Please enter User ID and Book Name.")
 
 
 if options == "Rent":
