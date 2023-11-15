@@ -110,15 +110,20 @@ def return_book(user_name, book_name):
         mycursor.execute("SELECT book_id FROM rent WHERE renter_id = (SELECT owner_id FROM book WHERE name = %s )", (book_name,))
         id_book = mycursor.fetchone()
 
-        if id_book:
+        mycursor.execute("SELECT books_rented FROM user WHERE username = %s", (user_name,))
+        books_rented_count = mycursor.fetchone()[0]
+
+
+        if (id_book and books_rented_count>0):
+
+            # Update books_rented for the rentee            
+            mycursor.execute("UPDATE user SET books_rented = books_rented - 1 WHERE username = %s", (user_name,))   
+
             # Update book availability to 1 in the book table
             mycursor.execute("UPDATE book SET available = 1 WHERE name = %s", (book_name,))
 
             # Update return_date and status in the rent table
             mycursor.execute("UPDATE rent SET return_date = NOW() WHERE book_id = %s", (id_book[0],))
-
-            # Update books_rented for the rentee
-            mycursor.execute("UPDATE user SET books_rented = books_rented - 1 WHERE username = %s", (user_name,))
 
             mydb.commit()
             st.write("Book returned successfully!")
